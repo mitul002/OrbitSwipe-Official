@@ -1,0 +1,6 @@
+.vercel
+firebase-key.json
+*.json
+!package.json
+!vercel.json
+.env*.local

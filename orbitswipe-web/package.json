@@ -1,0 +1,12 @@
+{
+  "name": "orbitswipe-license-server",
+  "version": "1.0.0",
+  "main": "api/validate.js",
+  "scripts": {
+    "build": "cd website && npm install && npm run build"
+  },
+  "dependencies": {
+    "crypto": "^1.0.1",
+    "firebase-admin": "^13.10.0"
+  }
+}

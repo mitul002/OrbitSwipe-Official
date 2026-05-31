@@ -1,0 +1,1 @@
+# OrbitSwipe Core Module

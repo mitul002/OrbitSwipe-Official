@@ -1,0 +1,1 @@
+# OrbitSwipe Installer Module

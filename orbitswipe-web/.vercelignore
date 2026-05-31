@@ -1,0 +1,19 @@
+# Dependency directories
+node_modules
+**/node_modules
+
+# Next.js build cache
+.next
+**/.next
+
+# Python build and other local artifacts
+build
+dist
+obf
+BACKUP
+.pyarmor
+pyarmor.bug.log
+*.py
+*.spec
+*.md
+website/out

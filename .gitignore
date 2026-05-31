@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.venv
+.env
+
+# PyInstaller & PyArmor
+build/
+.pyarmor/
+pyarmor.bug.log
+*.spec
+
+# Next.js & Node (for orbitswipe-web)
+**/node_modules/
+**/.next/
+**/out/
+**/.vercel/
+**/*.rar
+**/*.zip
+
+# OS files
+Thumbs.db
+Desktop.ini
