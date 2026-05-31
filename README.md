@@ -13,15 +13,15 @@
 
 * 📥 **[Download Latest Installer (.exe)](https://github.com/mitul002/OrbitSwipe-Official/releases/download/v1.5.2/OrbitSwipe.exe)**
 * 🌐 **[Official Website & Demo](https://orbitswipe.vercel.app)**
-* 🛒 **[Purchase Lifetime Personal License ($2)](https://crosstech.lemonsqueezy.com/checkout/buy/a7ebab6d-43c9-4e69-83d1-fd5a587a3827?enabled=1706213)**
-* 🛒 **[Purchase Lifetime Commercial License ($5)](https://crosstech.lemonsqueezy.com/checkout/buy/7e5a61e0-8e1b-4234-873d-30ad2d635981?enabled=1706175)**
+* 🛒 **[Purchase 1-Year Pro License ($9.99/Year)](https://crosstech.lemonsqueezy.com/checkout/buy/a7ebab6d-43c9-4e69-83d1-fd5a587a3827?enabled=1706213)**
+* 🛒 **[Purchase Lifetime Pro License ($19.99 One-Time)](https://crosstech.lemonsqueezy.com/checkout/buy/7e5a61e0-8e1b-4234-873d-30ad2d635981?enabled=1706175)**
 
 ---
 
 ## ✨ Features & Deep-Dive Guide
 
 ### 1. 🌀 Radial Launcher with Glass UI
-* **Precision Gestures:** Press and hold your custom hotkey or drag from the edge trigger to summon a hardware-accelerated circular menu right at your cursor.
+* **Precision Gestures:** Summon a PyQt6-based hardware-accelerated circular menu right at your cursor.
 * **Frictionless Navigation:** Hover over icons to select shortcuts, folders, or operations. Releasing the key triggers the selection in milliseconds.
 
 ### 2. 🪟 WinTop Window Manager
@@ -32,13 +32,16 @@
 * Real-time monitoring of CPU, RAM usage, Network upload/download speeds, and SSD writes embedded directly inside the launcher ring interface.
 
 ### 4. 🎛️ Volume & Brightness Sliders
-* Hover over the media sectors and scroll your mouse wheel to adjust system volume levels or display brightness instantly.
+* Hover over the media sectors and scroll your mouse wheel to adjust system volume levels or display brightness instantly using native Windows APIs.
 
 ### 5. 🔍 Smart Global Search
 * Type directly to launch applications, search files, execute math formulas, or trigger web search queries from a unified, beautiful search bar overlay.
 
 ### 6. 🎨 Custom Glass Accents & Themes
 * Fully customize the launcher size, background blur strength, transparency overlay, neon glass accents, and color schemes.
+
+### 7. 📁 Favorites & Toolbox Tracks
+* Build customizable quick-launch sectors containing your most frequently used files, directories, apps, or PowerShell scripts.
 
 ---
 
