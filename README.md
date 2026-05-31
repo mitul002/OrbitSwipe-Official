@@ -53,7 +53,7 @@
 
 ### Method 2: Windows Package Manager (Winget)
 ```cmd
-winget install OrbitSwipe
+winget install CrossTech.OrbitSwipe
 ```
 
 ### Method 3: Chocolatey
