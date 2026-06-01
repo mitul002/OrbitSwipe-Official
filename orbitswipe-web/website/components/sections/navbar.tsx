@@ -81,7 +81,7 @@ export function Navbar() {
             {/* Desktop CTA */}
             <div className="hidden md:flex items-center gap-3">
               <a
-                href="https://github.com/mitul002"
+                href="https://github.com/mitul002/OrbitSwipe-Official"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 text-muted-foreground hover:text-foreground transition-colors"

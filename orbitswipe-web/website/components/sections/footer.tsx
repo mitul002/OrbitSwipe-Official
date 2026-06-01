@@ -13,7 +13,7 @@ const footerLinks = {
   resources: [
     { label: "FAQ", href: "#faq" },
     { label: "Support", href: "mailto:hasinalmasmitul@gmail.com" },
-    { label: "GitHub", href: "https://github.com/mitul002" },
+    { label: "GitHub", href: "https://github.com/mitul002/OrbitSwipe-Official" },
   ],
   legal: [
     { label: "Privacy Policy", href: "/privacy" },
@@ -23,7 +23,7 @@ const footerLinks = {
 }
 
 const socialLinks = [
-  { icon: Github, href: "https://github.com/mitul002", label: "GitHub" },
+  { icon: Github, href: "https://github.com/mitul002/OrbitSwipe-Official", label: "GitHub" },
   { icon: Twitter, href: "https://twitter.com", label: "Twitter" },
   { icon: Mail, href: "mailto:contact@orbitswipe.com", label: "Email" },
 ]

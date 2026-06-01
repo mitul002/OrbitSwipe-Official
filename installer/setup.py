@@ -102,14 +102,18 @@ def run_installer():
             return True
 
     OK = "#10b981"; ERR = "#ef4444"
+    is_silent = "/S" in sys.argv or "--silent" in sys.argv or "/VERYSILENT" in sys.argv
     root = tk.Tk()
-    root.title(f"{APP_NAME} v{APP_VERSION} Setup")
-    set_tk_icon(root)
-    root.geometry("720x510"); root.resizable(False, False)
-    root.configure(bg=BG); root.update_idletasks()
-    x = (root.winfo_screenwidth()  - 720) // 2
-    y = (root.winfo_screenheight() - 510) // 2
-    root.geometry(f"720x510+{x}+{y}")
+    if is_silent:
+        root.withdraw()
+    else:
+        root.title(f"{APP_NAME} v{APP_VERSION} Setup")
+        set_tk_icon(root)
+        root.geometry("720x510"); root.resizable(False, False)
+        root.configure(bg=BG); root.update_idletasks()
+        x = (root.winfo_screenwidth()  - 720) // 2
+        y = (root.winfo_screenheight() - 510) // 2
+        root.geometry(f"720x510+{x}+{y}")
 
     hdr = tk.Canvas(root, width=720, height=175, bg=BG, highlightthickness=0)
     hdr.pack(fill="x")
@@ -218,16 +222,21 @@ def run_installer():
                     args = f'--install-to "{path}"'
                 else:
                     args = f'"{os.path.abspath(__file__)}" --install-to "{path}"'
+                if is_silent: args += ' /S'
                 res = ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, args, None, 1)
-                if res > 32: sys.exit(0)
+                if res > 32: os._exit(0)
             except Exception as e:
-                import tkinter.messagebox as mb
-                mb.showerror("Elevation Failed", f"Could not gain Admin rights: {e}")
+                if not is_silent:
+                    import tkinter.messagebox as mb
+                    mb.showerror("Elevation Failed", f"Could not gain Admin rights: {e}")
+                else:
+                    os._exit(1)
                 return
 
         def task():
             try:
                 def ui(msg, val=None, color=TX):
+                    if is_silent: return
                     def up():
                         pl.config(text=msg, fg=color)
                         if val is not None: pbar["value"] = val
@@ -295,7 +304,7 @@ def run_installer():
                             f"$s.TargetPath='{target}'; $s.Arguments='\"{dst}\" --run'; "
                             f"$s.WorkingDirectory='{path}'; $s.IconLocation='{icon_path}'; $s.Save()"
                         )
-                        subprocess.run(["powershell", "-WindowStyle", "Hidden", "-Command", ps_cmd],
+                        subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", ps_cmd],
                                        creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
                     except Exception as e:
                         _log(f"Installer: Shortcut creation failed: {e}")
@@ -352,6 +361,9 @@ def run_installer():
                 result["install_path"] = path
                 result["launch"] = lav.get()
 
+                if is_silent:
+                    os._exit(0)
+
                 def finale_ui():
                     ib.config(state="normal", text="🚀  Launch OrbitSwipe", bg="#059669")
                     ib.config(command=root.destroy)
@@ -378,7 +390,7 @@ def run_installer():
                         f"$s.WorkingDirectory='{path}'; $s.Description='Uninstall OrbitSwipe'; "
                         f"$s.IconLocation='shell32.dll,31'; $s.Save()"
                     )
-                    subprocess.run(["powershell", "-WindowStyle", "Hidden", "-Command", ps_un],
+                    subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", ps_un],
                                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
                     
                     # Desktop Shortcut
@@ -389,7 +401,7 @@ def run_installer():
                         f"$s.WorkingDirectory='{path}'; $s.Description='OrbitSwipe Launcher'; "
                         f"$s.IconLocation='{icon_loc}'; $s.Save()"
                     )
-                    subprocess.run(["powershell", "-WindowStyle", "Hidden", "-Command", ps_dk],
+                    subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", ps_dk],
                                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
                 except Exception as e:
                     _log(f"Un-sc err: {e}")
@@ -401,14 +413,32 @@ def run_installer():
             except Exception as e:
                 _log(f"Installer Error: {e}")
                 ui(f"❌ Error: {str(e)[:50]}", 0, ERR)
+                with open(os.path.join(path, "installer_error.txt"), "w") as f:
+                    import traceback
+                    f.write(traceback.format_exc())
+                if is_silent:
+                    os._exit(1)
                 root.after(0, lambda: ib.config(state="normal", text="✨   Retry Install", bg=AC))
                 # Removed error dialog box as per request
 
-        ib.config(state="disabled", text="⌛  Installing…")
-        import threading
-        threading.Thread(target=task, daemon=True).start()
+        if is_silent:
+            task()
+        else:
+            ib.config(state="disabled", text="⌛  Installing…")
+            import threading
+            threading.Thread(target=task, daemon=True).start()
 
     ib.config(command=do_install)
+
+    if is_silent:
+        try:
+            do_install()
+        except Exception as e:
+            with open(os.path.join(dp, "installer_crash.txt"), "w") as f:
+                import traceback
+                f.write(traceback.format_exc())
+            os._exit(1)
+        os._exit(0)
 
     if "--install-to" in sys.argv and ctypes.windll.shell32.IsUserAnAdmin():
         root.after(500, do_install)
@@ -434,11 +464,13 @@ def run_uninstaller(tk_root=None):
         tk_root.withdraw()
         set_tk_icon(tk_root)
 
-    msg = "This will completely remove OrbitSwipe, your settings, and all shortcuts.\n\nContinue?"
-    if not messagebox.askyesno("OrbitSwipe Uninstall", msg):
-        if not tk_root._windowingsystem == 'win32': # If we created it, destroy it
-             tk_root.destroy()
-        return
+    is_silent = "/S" in sys.argv or "--silent" in sys.argv or "/VERYSILENT" in sys.argv
+    if not is_silent:
+        msg = "This will completely remove OrbitSwipe, your settings, and all shortcuts.\n\nContinue?"
+        if not messagebox.askyesno("OrbitSwipe Uninstall", msg):
+            if not tk_root._windowingsystem == 'win32': # If we created it, destroy it
+                 tk_root.destroy()
+            return
 
     try:
         # 1. Close running instances (Aggressive Check)
@@ -543,7 +575,8 @@ def run_uninstaller(tk_root=None):
         temp_dir = os.environ.get("TEMP", os.path.expanduser("~\\AppData\\Local\\Temp"))
         bat_path = os.path.join(temp_dir, f"os_uninstall_{int(time.time())}.bat")
         
-        messagebox.showinfo("Success", "OrbitSwipe has been removed from your system.\n\nFinal cleanup will complete in a moment.")
+        if not is_silent:
+            messagebox.showinfo("Success", "OrbitSwipe has been removed from your system.\n\nFinal cleanup will complete in a moment.")
         
         with open(bat_path, 'w') as f:
             f.write(f'@echo off\n')
@@ -583,7 +616,8 @@ def run_uninstaller(tk_root=None):
         sys.exit(0)
     except Exception as e:
         _log(f"Uninstall failed: {e}")
-        messagebox.showerror("Error", f"Uninstall failed: {e}")
+        if not is_silent:
+            messagebox.showerror("Error", f"Uninstall failed: {e}")
         if tk_root: 
             try: tk_root.destroy()
             except: pass
