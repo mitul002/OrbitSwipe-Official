@@ -373,9 +373,6 @@ def run_installer():
                 result["install_path"] = path
                 result["launch"] = lav.get()
 
-                if is_silent:
-                    os._exit(0)
-
                 def finale_ui():
                     ib.config(state="normal", text="🚀  Launch OrbitSwipe", bg="#059669")
                     ib.config(command=root.destroy)
@@ -421,6 +418,9 @@ def run_installer():
                 # The actual launch will be handled by main.py based on result["launch"]
                 # so we don't need to call Popen here.
                 pass
+                
+                if is_silent:
+                    os._exit(0)
 
             except Exception as e:
                 try:
