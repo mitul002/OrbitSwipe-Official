@@ -487,7 +487,7 @@ def run_uninstaller(tk_root=None):
 
     is_silent = "/S" in sys.argv or "--silent" in sys.argv or "/VERYSILENT" in sys.argv
     if not is_silent:
-        msg = "This will completely remove OrbitSwipe, your settings, and all shortcuts.\n\nContinue?"
+        msg = "This will completely remove OrbitSwipe, your settings, and all shortcuts.\n\n(Note: You can take a backup of your settings from the 'Settings' menu before uninstalling.)\n\nContinue?"
         if not messagebox.askyesno("OrbitSwipe Uninstall", msg):
             if not tk_root._windowingsystem == 'win32': # If we created it, destroy it
                  tk_root.destroy()
@@ -619,6 +619,9 @@ def run_uninstaller(tk_root=None):
                 f.write(f'    set "SKIP=0"\n')
                 f.write(f'    if /i "%%~nxf"=="trial.dat" set "SKIP=1"\n')
                 f.write(f'    if /i "%%~nxf"=="license.dat" set "SKIP=1"\n')
+                f.write(f'    if /i "%%~xf"==".json" (\n')
+                f.write(f'        if /i not "%%~nxf"=="config.json" set "SKIP=1"\n')
+                f.write(f'    )\n')
                 f.write(f'    if "!SKIP!"=="0" del /f /q "%%f" > NUL 2>&1\n')
                 f.write(f'  )\n')
                 f.write(f'  rd "{np}" > NUL 2>&1\n')
