@@ -373,9 +373,16 @@ def run_installer():
                 result["install_path"] = path
                 result["launch"] = lav.get()
 
+                def finalize_and_exit():
+                    result["launch"] = lav.get()
+                    root.destroy()
+
                 def finale_ui():
-                    ib.config(state="normal", text="🚀  Launch OrbitSwipe", bg="#059669")
-                    ib.config(command=root.destroy)
+                    def update_btn(*args):
+                        ib.config(text="🚀  Launch OrbitSwipe" if lav.get() else "✅  Finish")
+                    lav.trace_add("write", update_btn)
+                    ib.config(state="normal", text="🚀  Launch OrbitSwipe" if lav.get() else "✅  Finish", bg="#059669")
+                    ib.config(command=finalize_and_exit)
                 root.after(0, finale_ui)
 
                 try:
@@ -402,16 +409,7 @@ def run_installer():
                     subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", ps_un],
                                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
                     
-                    # Desktop Shortcut
-                    dlnk = os.path.join(os.environ["USERPROFILE"], "Desktop", f"{APP_NAME}.lnk")
-                    ps_dk = (
-                        f"$s=(New-Object -COM WScript.Shell).CreateShortcut('{dlnk}'); "
-                        f"$s.TargetPath='{target}'; $s.Arguments='--run'; "
-                        f"$s.WorkingDirectory='{path}'; $s.Description='OrbitSwipe Launcher'; "
-                        f"$s.IconLocation='{icon_loc}'; $s.Save()"
-                    )
-                    subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", ps_dk],
-                                   creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+                    # Desktop Shortcut is already handled earlier if dv.get() is True
                 except Exception as e:
                     _log(f"Un-sc err: {e}")
 
