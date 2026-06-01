@@ -230,11 +230,29 @@ if __name__ == "__main__":
                 mb.showerror("OrbitSwipe crashed", f"{e}\\n\\nCheck {LOG_FILE}")
             except Exception: pass
     else:
-        result = run_installer()
-        if result and result.get("launch") and result.get("install_path"):
-            path    = result["install_path"]
-            new_exe = os.path.join(path, "OrbitSwipe.exe")
-            if os.path.exists(new_exe):
-                subprocess.Popen([new_exe, "--run", "--first-launch"], cwd=path, creationflags=0x08000000)      
-            else:
-                subprocess.Popen([sys.executable, __file__, "--run", "--first-launch"], creationflags=0x08000000)
+        # If running the executable directly from the installation directory, launch the app instead of the installer
+        from orbitswipe.core.constants import APPDATA_DIR
+        is_installed_dir = False
+        if IS_FROZEN:
+            exe_path = os.path.abspath(sys.argv[0])
+            if exe_path.lower().startswith(APPDATA_DIR.lower()):
+                is_installed_dir = True
+
+        if is_installed_dir:
+            try:
+                run_app()
+            except Exception as e:
+                _log(f"FATAL run_app: {e}\\n{traceback.format_exc()}")
+                try:
+                    import tkinter.messagebox as mb
+                    mb.showerror("OrbitSwipe crashed", f"{e}\\n\\nCheck {LOG_FILE}")
+                except Exception: pass
+        else:
+            result = run_installer()
+            if result and result.get("launch") and result.get("install_path"):
+                path    = result["install_path"]
+                new_exe = os.path.join(path, "OrbitSwipe.exe")
+                if os.path.exists(new_exe):
+                    subprocess.Popen([new_exe, "--run", "--first-launch"], cwd=path, creationflags=0x08000000)      
+                else:
+                    subprocess.Popen([sys.executable, __file__, "--run", "--first-launch"], creationflags=0x08000000)
