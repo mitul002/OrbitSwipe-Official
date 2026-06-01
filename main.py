@@ -100,6 +100,7 @@ def run_app():
             ht = Hotkey(cfg)
             ht.fired.connect(launcher.toggle)
             ht.pin_requested.connect(launcher._toggle_current_window_topmost)
+            ht.color_picker_requested.connect(lambda: launcher._activate({"action": "colorpicker"}))
             ht.start(); _hk[0] = ht
     _start_hk()
 
@@ -152,6 +153,8 @@ def run_app():
         if res.get("status") in ("revoked", "offline_expired") or not is_app_allowed():
             _log(f"Silent verification lock triggered: status={res.get('status')}. Deactivating.")
             launcher.hide()
+            if hasattr(launcher, "_color_picker_win") and launcher._color_picker_win:
+                launcher._color_picker_win.hide()
             for t in triggers:
                 t.hide()
             gate = TrialGateDlg()

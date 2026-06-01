@@ -1044,6 +1044,16 @@ class SettingsDlg(QDialog):
             if self._on_hotkey_change: self._on_hotkey_change()
         self.hk_pin_rec.changed.connect(_hk_pin_changed)
         h_grid.addWidget(self.hk_pin_rec, 1, 1)
+        
+        h_grid.addWidget(QLabel("Color Picker Shortcut:"), 2, 0)
+        self.hk_color_rec = HotkeyRecorder(self.cfg.get('hotkey_color_mod','Win+Alt'), self.cfg.get('hotkey_color_key','C'))
+        def _hk_color_changed(m, k):
+            self.cfg["hotkey_color_mod"] = m; self.cfg["hotkey_color_key"] = k
+            save_cfg(self.cfg)
+            if self._on_hotkey_change: self._on_hotkey_change()
+        self.hk_color_rec.changed.connect(_hk_color_changed)
+        h_grid.addWidget(self.hk_color_rec, 2, 1)
+
         h_grid.setColumnStretch(2, 1) # Push to left
         
         l4.addLayout(h_grid)

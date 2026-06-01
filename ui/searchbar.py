@@ -130,16 +130,21 @@ class SearchBar(QWidget):
             _log(f"Search error: {e}")
             self._list.hide(); self.setFixedHeight(54)
 
+    def hide(self):
+        if hasattr(self, "_list"):
+            self._list.hide()
+        self.setFixedHeight(54)
+        super().hide()
+
     def _launch(self, path):
-        self.launch.emit(path); self.hide(); self._list.hide()
+        self.hide()
+        self.launch.emit(path)
 
     def _launch_toolbox_item(self, item):
-        # We can just emit the action or path. Let's create a custom signal or use launch
-        # Let's emit a string starting with "TOOLBOX:"
         act = item.get("action", "")
+        self.hide()
         if act:
             self.launch.emit(f"TOOLBOX:{act}")
-        self.hide(); self._list.hide()
 
     def eventFilter(self, obj, ev):
         if obj is self._e and ev.type() == QEvent.Type.KeyPress:

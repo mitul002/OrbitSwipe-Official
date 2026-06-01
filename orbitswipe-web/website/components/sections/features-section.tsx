@@ -11,7 +11,8 @@ import {
   MousePointer2,
   Palette,
   Timer,
-  Power
+  Power,
+  Droplet
 } from "lucide-react"
 
 const features = [
@@ -77,6 +78,13 @@ const features = [
     description: "Lock, sleep, restart, hibernate, or shut down your PC with instant execution or scheduled countdown timers.",
     gradient: "from-violet-600 to-purple-500",
     tag: "Power",
+  },
+  {
+    icon: Droplet,
+    title: "Color Picker",
+    description: "Built-in screen magnifier with hex/rgb copy and color history tracking.",
+    gradient: "from-fuchsia-500 to-purple-600",
+    tag: "Tool",
   },
 ]
 

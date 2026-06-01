@@ -111,11 +111,12 @@ GLASS_PRESETS = {
 DEFAULT_CFG = {
     "_cfg_version":   CONFIG_VERSION,
     "items":          [
+        {"name": "Color Picker", "icon": "💧", "type": "tool", "action": "colorpicker"},
+        {"name": "WinTop Manager", "icon": "🪟", "type": "tool", "action": "window_switcher"},
+        {"name": "Search", "icon": "🔍", "type": "tool", "action": "search_bar"},
         {"type":"url","name":"OrbitSwipe","url":"https://orbitswipe.vercel.app/","icon":"🌐","icon_b64":""},
         {"type":"url","name":"GitHub","url":"https://github.com/mitul002/","icon":"🌐","icon_b64":""},
-        {"type":"url","name":"LinkedIn","url":"https://www.linkedin.com/in/hasinalmas","icon":"🌐","icon_b64":""},
         {"type":"url","name":"YouTube","url":"https://www.youtube.com/@xpsplus3655","icon":"🌐","icon_b64":""},
-        {"name": "Search", "icon": "🔍", "type": "tool", "action": "search_bar"},
     ],
     "recents":        [],
     "toolbox":        ALL_TOOLS[:33],
@@ -140,6 +141,8 @@ DEFAULT_CFG = {
     "hotkey_key":     "S",
     "hotkey_pin_mod": "Win+Alt",
     "hotkey_pin_key": "S",
+    "hotkey_color_mod": "Win+Alt",
+    "hotkey_color_key": "C",
     "slider_locked":  False,
     "sound_enabled":  True,
     "auto_hide":      False,

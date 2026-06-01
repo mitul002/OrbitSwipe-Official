@@ -335,6 +335,7 @@ class MediaController:
 class Hotkey(QThread):
     fired = pyqtSignal()
     pin_requested = pyqtSignal() # New signal for Win+Alt+S
+    color_picker_requested = pyqtSignal()
     # Map string names → VK codes
     MOD_MAP = {"Alt": 0x0001, "Ctrl": 0x0002, "Shift": 0x0004, "Win": 0x0008}
     KEY_MAP  = {c: ord(c) for c in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"}
@@ -374,6 +375,13 @@ class Hotkey(QThread):
             vk_p  = self.KEY_MAP.get(key_p_str, 0x53)
             ctypes.windll.user32.RegisterHotKey(hwnd, 2, mod_p | 0x4000, vk_p)
             
+            # Register color picker hotkey: Configurable (Default Win+Alt+C)
+            mod_c_str = self._cfg.get("hotkey_color_mod", "Win+Alt")
+            key_c_str = self._cfg.get("hotkey_color_key", "C").upper()
+            mod_c = self._parse_mod(mod_c_str)
+            vk_c  = self.KEY_MAP.get(key_c_str, 0x43)
+            ctypes.windll.user32.RegisterHotKey(hwnd, 3, mod_c | 0x4000, vk_c)
+            
             msg = ctypes.wintypes.MSG()
             WM_HOTKEY = 0x0312
             while self._go:
@@ -384,9 +392,12 @@ class Hotkey(QThread):
                             self.fired.emit()
                         elif msg.wParam == 2:
                             self.pin_requested.emit()
+                        elif msg.wParam == 3:
+                            self.color_picker_requested.emit()
                 time.sleep(0.02) # Faster polling
             ctypes.windll.user32.UnregisterHotKey(hwnd, 1)
             ctypes.windll.user32.UnregisterHotKey(hwnd, 2)
+            ctypes.windll.user32.UnregisterHotKey(hwnd, 3)
             ctypes.windll.user32.DestroyWindow(hwnd)
         except Exception as e:
             _log(f"hotkey thread: {e}")

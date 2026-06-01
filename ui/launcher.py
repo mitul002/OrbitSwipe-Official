@@ -26,6 +26,7 @@ from orbitswipe.core.utils import _log, extract_icon_png, _dwm_strip, get_asset_
 from orbitswipe.core.engine import Spring, Sound, Stats, MediaController, Hotkey, make_pm
 from orbitswipe.ui.utils import make_tray_icon
 from orbitswipe.ui.searchbar import SearchBar
+from orbitswipe.ui.colorpicker import ColorPicker
 
 try:
     from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
@@ -167,6 +168,8 @@ class Launcher(QWidget):
         if st["trial"]["expired"]:
             self._trial_timer.stop()
             # Lock launcher if trial expired
+            if hasattr(self, "_color_picker_win") and self._color_picker_win:
+                self._color_picker_win.hide()
             dlg = TrialGateDlg(self)
             if dlg.exec():
                 # If activated, restart timer and continue
@@ -533,13 +536,22 @@ class Launcher(QWidget):
             if ctypes.windll.user32.GetAsyncKeyState(0x01) & 0x8000:
                 # LBUTTON is down
                 mx, my = QCursor.pos().x(), QCursor.pos().y()
-                cx_g = self.geometry().x() + self._cx
-                cy_g = self.geometry().y() + self._cy
-                dist = math.hypot(mx - cx_g, my - cy_g)
-                _, _, Ro = self._radii()
-                # Only close if click is clearly outside the outer ring
-                if dist > Ro + 10:
-                    self._close()
+                
+                # Check if click is inside the SearchBar widget (including search results)
+                inside_sb = False
+                if hasattr(self, "_sb") and self._sb.isVisible():
+                    sb_geom_g = QRect(self._sb.mapToGlobal(QPoint(0, 0)), self._sb.size())
+                    if sb_geom_g.contains(QPoint(mx, my)):
+                        inside_sb = True
+                
+                if not inside_sb:
+                    cx_g = self.geometry().x() + self._cx
+                    cy_g = self.geometry().y() + self._cy
+                    dist = math.hypot(mx - cx_g, my - cy_g)
+                    _, _, Ro = self._radii()
+                    # Only close if click is clearly outside the outer ring
+                    if dist > Ro + 10:
+                        self._close()
 
         # FIX: only update/show when actually open; pause rendering when hidden
         if self._open or self._spring.v > 0.004:
@@ -1160,18 +1172,7 @@ class Launcher(QWidget):
             save_cfg(self.cfg)
         self.update()
 
-    def focusOutEvent(self, e):
-        if getattr(self, "_in_dialog", False):
-            return super().focusOutEvent(e)
-        def delayed_check():
-            from PyQt6.QtWidgets import QApplication
-            if self._edit and not QApplication.activeWindow():
-                self._edit = False
-                save_cfg(self.cfg, immediate=True)
-                self.update()
-        QTimer.singleShot(500, delayed_check)
-        super().focusOutEvent(e)
-
+    # focusOutEvent moved to below
     # ── Right-click context menu ──────────────────────────────────────────
     def _ctx(self, e):
         mx, my = e.position().x(), e.position().y()
@@ -1538,13 +1539,24 @@ class Launcher(QWidget):
             elif a=="cmd":         subprocess.Popen(["cmd.exe","/c","start"])
             elif a=="paint":       subprocess.Popen(["mspaint.exe"])
             elif a=="colorpicker":
-                from orbitswipe.ui.colorpicker import ColorPicker
-                # Keep reference on self so it stays alive
-                if not hasattr(self, "_color_picker_win") or \
-                        not self._color_picker_win or \
-                        not self._color_picker_win.isVisible():
-                    self._color_picker_win = ColorPicker()
-                self._color_picker_win.show()
+                # Keep reference on self so it stays alive, but handle C++ deletion safely
+                need_create = True
+                if hasattr(self, "_color_picker_win") and self._color_picker_win is not None:
+                    try:
+                        # Access isVisible() to check if C++ object still exists
+                        visible = self._color_picker_win.isVisible()
+                        need_create = not visible
+                    except RuntimeError:
+                        # C++ object has been deleted, clear reference
+                        self._color_picker_win = None
+                        need_create = True
+                
+                if need_create:
+                    self._color_picker_win = ColorPicker(self.cfg)
+                    self._color_picker_win.destroyed.connect(lambda: setattr(self, "_color_picker_win", None))
+                    self._color_picker_win.show()
+                else:
+                    self._color_picker_win.close()
             elif a=="clipboard":
                 ku(0x5B,0,0,0); ku(0x56,0,0,0); ku(0x56,0,2,0); ku(0x5B,0,2,0)
             elif a=="cleanmgr":    subprocess.Popen(["cleanmgr.exe"])
@@ -1677,12 +1689,28 @@ class Launcher(QWidget):
                 self._activate_window(dlg.selected_hwnd)
         self._in_dialog = False
 
+    def focusOutEvent(self, e):
+        if getattr(self, "_in_dialog", False):
+            return super().focusOutEvent(e)
 
+        # Handle edit mode focus loss (merged from old duplicate)
+        def delayed_check():
+            from PyQt6.QtWidgets import QApplication
+            if self._edit and not QApplication.activeWindow():
+                self._edit = False
+                from orbitswipe.core.utils import save_cfg
+                save_cfg(self.cfg, immediate=True)
+                self.update()
+        QTimer.singleShot(500, delayed_check)
 
-
-
-
-
+        if self._edit:
+            self._edit = False
+            self.update()
+        if not self._pinned:
+            if hasattr(self, "_sb") and self._sb.isVisible():
+                return super().focusOutEvent(e)
+            self._close()
+        return super().focusOutEvent(e)
 
     def _activate_window(self, hwnd):
         def _do_activate():
@@ -1722,10 +1750,10 @@ class Launcher(QWidget):
             act = path.split(":", 1)[1]
             self._do_tool({"action": act})
             return
-        try: os.startfile(path)
-        except Exception: pass
         if not self._pinned:
             self._close()
+        try: os.startfile(path)
+        except Exception: pass
 
     def add_any_path(self, path):
         if not self._check_limit(): return

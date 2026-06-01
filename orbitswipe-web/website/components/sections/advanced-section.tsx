@@ -6,7 +6,7 @@ import {
   Keyboard, 
   PanelLeft, 
   Monitor, 
-  Clipboard, 
+  Droplet, 
   Terminal 
 } from "lucide-react"
 
@@ -32,9 +32,9 @@ const advancedFeatures = [
     description: "Works on any display",
   },
   {
-    icon: Clipboard,
-    title: "Clipboard Tools",
-    description: "Quick access utilities",
+    icon: Droplet,
+    title: "Color Picker Tools",
+    description: "Built-in magnifier & history",
   },
   {
     icon: Terminal,

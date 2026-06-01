@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Monitor, Cpu, Radio, Palette, Layers, Power } from "lucide-react"
+import { Monitor, Cpu, Radio, Palette, Layers, Power, Droplet } from "lucide-react"
 
 const SCREENSHOTS = [
   {
@@ -64,6 +64,16 @@ const SCREENSHOTS = [
     color: "#a78bfa",
     desc: "Shut down, restart, hibernate, sleep, or lock your computer instantly or on a custom schedule. Keep tracking time in the background with a clean visual countdown timer widget.",
     highlights: ["Scheduled shutdown & restart", "Background countdown tracker", "Instant one-click trigger", "Sleek glassmorphic countdown HUD"],
+  },
+  {
+    id: "colorpicker",
+    title: "Color Picker",
+    subtitle: "Built-in Screen Magnifier",
+    image: "/colorpicker.png",
+    icon: Droplet,
+    color: "#f43f5e",
+    desc: "Extract perfect color codes instantly from any pixel on your screen with a powerful magnification loupe. Build dynamic palettes and manage your recent color history effortlessly.",
+    highlights: ["Precise screen magnification", "Hex, RGB & HSL copy support", "Recent color history tracking", "Instant hotkey activation"],
   },
 ]
 
