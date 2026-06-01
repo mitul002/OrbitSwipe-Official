@@ -487,7 +487,7 @@ def run_uninstaller(tk_root=None):
 
     is_silent = "/S" in sys.argv or "--silent" in sys.argv or "/VERYSILENT" in sys.argv
     if not is_silent:
-        msg = "This will completely remove OrbitSwipe, your settings, and all shortcuts.\n\n(Note: You can take a backup of your settings from the 'Settings' menu before uninstalling.)\n\nContinue?"
+        msg = "This will completely remove OrbitSwipe, your configeration & shortcuts.\n\nContinue?"
         if not messagebox.askyesno("OrbitSwipe Uninstall", msg):
             if not tk_root._windowingsystem == 'win32': # If we created it, destroy it
                  tk_root.destroy()
