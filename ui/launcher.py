@@ -1288,7 +1288,7 @@ class Launcher(QWidget):
                 m.exec(gpos)
             elif self._tab == 2:
                 curr  = {x["action"] for x in self.cfg.get("toolbox",[])}
-                avail = [t for t in ALL_TOOLS if t["action"] not in curr]
+                avail = sorted([t for t in ALL_TOOLS if t["action"] not in curr], key=lambda x: x.get("name", "").lower())
                 if not avail: return
                 m = QMenu(self)
                 m.setStyleSheet("""
@@ -1540,15 +1540,18 @@ class Launcher(QWidget):
             elif a=="colorpicker":
                 from PyQt6.QtWidgets import QColorDialog
                 from PyQt6.QtGui import QApplication
+                self._in_dialog = True
+                self.hide() # Hide launcher so screen color picker works
                 def _show_color():
-                    dlg = QColorDialog(self)
+                    dlg = QColorDialog()
                     dlg.setOption(QColorDialog.ColorDialogOption.ShowAlphaChannel)
+                    dlg.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
                     if dlg.exec():
                         c = dlg.selectedColor()
                         QApplication.clipboard().setText(c.name())
-                        try: self._tooltip.setText(f"Copied: {c.name()}"); self._tooltip.show(); QTimer.singleShot(1500, self._tooltip.hide)
-                        except: pass
-                _show_color()
+                    self._in_dialog = False
+                    self._close()
+                QTimer.singleShot(50, _show_color)
             elif a=="clipboard":
                 ku(0x5B,0,0,0); ku(0x56,0,0,0); ku(0x56,0,2,0); ku(0x5B,0,2,0)
             elif a=="cleanmgr":    subprocess.Popen(["cleanmgr.exe"])
