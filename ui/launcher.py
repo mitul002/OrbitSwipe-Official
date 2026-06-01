@@ -1420,7 +1420,11 @@ class Launcher(QWidget):
                 self.update(); return
             
             if act == "search_bar":
-                self._sb.show_bar(self._W); return
+                if self._tab == 2:
+                    self._sb.show_bar(self._W, mode="toolbox")
+                else:
+                    self._sb.show_bar(self._W)
+                return
             if act == "window_switcher":
                 self._do_window_switcher(); return
             self._do_tool(item); return
@@ -1533,6 +1537,18 @@ class Launcher(QWidget):
             elif a=="notepad":     subprocess.Popen(["notepad.exe"])
             elif a=="cmd":         subprocess.Popen(["cmd.exe","/c","start"])
             elif a=="paint":       subprocess.Popen(["mspaint.exe"])
+            elif a=="colorpicker":
+                from PyQt6.QtWidgets import QColorDialog
+                from PyQt6.QtGui import QApplication
+                def _show_color():
+                    dlg = QColorDialog(self)
+                    dlg.setOption(QColorDialog.ColorDialogOption.ShowAlphaChannel)
+                    if dlg.exec():
+                        c = dlg.selectedColor()
+                        QApplication.clipboard().setText(c.name())
+                        try: self._tooltip.setText(f"Copied: {c.name()}"); self._tooltip.show(); QTimer.singleShot(1500, self._tooltip.hide)
+                        except: pass
+                _show_color()
             elif a=="clipboard":
                 ku(0x5B,0,0,0); ku(0x56,0,0,0); ku(0x56,0,2,0); ku(0x5B,0,2,0)
             elif a=="cleanmgr":    subprocess.Popen(["cleanmgr.exe"])
@@ -1706,6 +1722,10 @@ class Launcher(QWidget):
             self._close()
 
     def _from_search(self, path):
+        if path.startswith("TOOLBOX:"):
+            act = path.split(":", 1)[1]
+            self._do_tool({"action": act})
+            return
         try: os.startfile(path)
         except Exception: pass
         if not self._pinned:

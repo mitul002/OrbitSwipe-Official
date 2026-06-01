@@ -42,7 +42,12 @@ class SearchBar(QWidget):
         self._search_timer.setSingleShot(True)
         self._search_timer.timeout.connect(self._do_search_sync)
 
-    def show_bar(self, w):
+    def show_bar(self, w, mode="global"):
+        self._mode = mode
+        if mode == "toolbox":
+            self._e.setPlaceholderText("🔍  Search Toolbox...")
+        else:
+            self._e.setPlaceholderText("🔍  Search apps & files…")
         self.setFixedWidth(w); self.move(0,0)
         self._e.clear(); self._list.hide()
         self.setFixedHeight(54); self.show(); self._e.setFocus()
@@ -68,31 +73,51 @@ class SearchBar(QWidget):
         
         try:
             tl = text.lower()
-            # Restore stable search locations
-            for base in [
-                os.path.join(os.environ.get("APPDATA",""), r"Microsoft\Windows\Start Menu\Programs"),
-                r"C:\ProgramData\Microsoft\Windows\Start Menu\Programs",
-                os.path.join(os.environ.get("LOCALAPPDATA",""), r"Microsoft\Windows\Start Menu\Programs"),
-            ]:
-                if not os.path.isdir(base): continue
-                for root2,_,files in os.walk(base):
-                    for fn in files:
-                        if tl in fn.lower() and fn.lower().endswith((".lnk",".exe")):
-                            self._res.append(os.path.join(root2, fn))
-                            if len(self._res) >= 8: break
-                    if len(self._res) >= 8: break
+            
+            if self._mode == "toolbox":
+                from orbitswipe.core.constants import ALL_TOOLS
+                for t in ALL_TOOLS:
+                    if tl in t.get("name", "").lower():
+                        self._res.append(t)
+                        if len(self._res) >= 8: break
+                
+                for t in self._res:
+                    nm = t.get("name", "")
+                    ic = t.get("icon", "")
+                    btn = QPushButton(f"  {ic}  {nm}"); btn.setFixedHeight(30)
+                    btn.setStyleSheet(
+                        "QPushButton{background:rgba(255,255,255,12);color:#e2e8f0;"
+                        "text-align:left;border-radius:6px;border:none;"
+                        "font-family:'Segoe UI';font-size:9pt;padding:0 8px;}"
+                        "QPushButton:hover{background:#7c3aed;}")
+                    btn.clicked.connect(lambda _, item=t: self._launch_toolbox_item(item))
+                    self._lL.addWidget(btn)
+            else:
+                # Restore stable search locations
+                for base in [
+                    os.path.join(os.environ.get("APPDATA",""), r"Microsoft\Windows\Start Menu\Programs"),
+                    r"C:\ProgramData\Microsoft\Windows\Start Menu\Programs",
+                    os.path.join(os.environ.get("LOCALAPPDATA",""), r"Microsoft\Windows\Start Menu\Programs"),
+                ]:
+                    if not os.path.isdir(base): continue
+                    for root2,_,files in os.walk(base):
+                        for fn in files:
+                            if tl in fn.lower() and fn.lower().endswith((".lnk",".exe")):
+                                self._res.append(os.path.join(root2, fn))
+                                if len(self._res) >= 8: break
+                        if len(self._res) >= 8: break
 
-            for fp in self._res:
-                nm  = os.path.splitext(os.path.basename(fp))[0]
-                btn = QPushButton(f"  {nm}"); btn.setFixedHeight(30)
-                btn.setStyleSheet(
-                    "QPushButton{background:rgba(255,255,255,12);color:#e2e8f0;"
-                    "text-align:left;border-radius:6px;border:none;"
-                    "font-family:'Segoe UI';font-size:9pt;padding:0 8px;}"
-                    "QPushButton:hover{background:#7c3aed;}")
-                btn.setToolTip(fp)
-                btn.clicked.connect(lambda _,p=fp: self._launch(p))
-                self._lL.addWidget(btn)
+                for fp in self._res:
+                    nm  = os.path.splitext(os.path.basename(fp))[0]
+                    btn = QPushButton(f"  {nm}"); btn.setFixedHeight(30)
+                    btn.setStyleSheet(
+                        "QPushButton{background:rgba(255,255,255,12);color:#e2e8f0;"
+                        "text-align:left;border-radius:6px;border:none;"
+                        "font-family:'Segoe UI';font-size:9pt;padding:0 8px;}"
+                        "QPushButton:hover{background:#7c3aed;}")
+                    btn.setToolTip(fp)
+                    btn.clicked.connect(lambda _,p=fp: self._launch(p))
+                    self._lL.addWidget(btn)
 
             if self._res:
                 h = len(self._res)*34+10
@@ -108,12 +133,24 @@ class SearchBar(QWidget):
     def _launch(self, path):
         self.launch.emit(path); self.hide(); self._list.hide()
 
+    def _launch_toolbox_item(self, item):
+        # We can just emit the action or path. Let's create a custom signal or use launch
+        # Let's emit a string starting with "TOOLBOX:"
+        act = item.get("action", "")
+        if act:
+            self.launch.emit(f"TOOLBOX:{act}")
+        self.hide(); self._list.hide()
+
     def eventFilter(self, obj, ev):
         if obj is self._e and ev.type() == QEvent.Type.KeyPress:
             if ev.key() == Qt.Key.Key_Escape:
                 self.hide(); self._list.hide(); return True
             if ev.key() == Qt.Key.Key_Return:
-                if self._res: self._launch(self._res[0])
+                if self._res:
+                    if getattr(self, "_mode", "global") == "toolbox":
+                        self._launch_toolbox_item(self._res[0])
+                    else:
+                        self._launch(self._res[0])
                 return True
         return super().eventFilter(obj, ev)
 

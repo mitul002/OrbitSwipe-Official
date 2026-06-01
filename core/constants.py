@@ -48,6 +48,7 @@ ALL_TOOLS = [
     {"name": "Clipboard",   "icon": "📋",  "action": "clipboard"},
     {"name": "Command",     "icon": "💻",  "action": "cmd"},
     {"name": "Paint",       "icon": "🎨",  "action": "paint"},
+    {"name": "Color Picker","icon": "💧",  "action": "colorpicker"},
     {"name": "Update",      "icon": "🔄",  "action": "update"},
     {"name": "App List",    "icon": "📦",  "action": "appwiz"},
     {"name": "Lock",        "icon": "🔒",  "action": "lock"},
