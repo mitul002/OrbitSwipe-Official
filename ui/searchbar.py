@@ -90,7 +90,7 @@ class SearchBar(QWidget):
                         "text-align:left;border-radius:6px;border:none;"
                         "font-family:'Segoe UI';font-size:9pt;padding:0 8px;}"
                         "QPushButton:hover{background:#7c3aed;}")
-                    btn.clicked.connect(lambda _, item=t: self._launch_toolbox_item(item))
+                    btn.clicked.connect(lambda chk=False, item=t: self._launch_toolbox_item(item))
                     self._lL.addWidget(btn)
             else:
                 # Restore stable search locations
@@ -116,7 +116,7 @@ class SearchBar(QWidget):
                         "font-family:'Segoe UI';font-size:9pt;padding:0 8px;}"
                         "QPushButton:hover{background:#7c3aed;}")
                     btn.setToolTip(fp)
-                    btn.clicked.connect(lambda _,p=fp: self._launch(p))
+                    btn.clicked.connect(lambda chk=False, p=fp: self._launch(p))
                     self._lL.addWidget(btn)
 
             if self._res:

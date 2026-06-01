@@ -1538,20 +1538,13 @@ class Launcher(QWidget):
             elif a=="cmd":         subprocess.Popen(["cmd.exe","/c","start"])
             elif a=="paint":       subprocess.Popen(["mspaint.exe"])
             elif a=="colorpicker":
-                from PyQt6.QtWidgets import QColorDialog
-                from PyQt6.QtGui import QApplication
-                self._in_dialog = True
-                self.hide() # Hide launcher so screen color picker works
-                def _show_color():
-                    dlg = QColorDialog()
-                    dlg.setOption(QColorDialog.ColorDialogOption.ShowAlphaChannel)
-                    dlg.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
-                    if dlg.exec():
-                        c = dlg.selectedColor()
-                        QApplication.clipboard().setText(c.name())
-                    self._in_dialog = False
-                    self._close()
-                QTimer.singleShot(50, _show_color)
+                from orbitswipe.ui.colorpicker import ColorPicker
+                # Keep reference on self so it stays alive
+                if not hasattr(self, "_color_picker_win") or \
+                        not self._color_picker_win or \
+                        not self._color_picker_win.isVisible():
+                    self._color_picker_win = ColorPicker()
+                self._color_picker_win.show()
             elif a=="clipboard":
                 ku(0x5B,0,0,0); ku(0x56,0,0,0); ku(0x56,0,2,0); ku(0x5B,0,2,0)
             elif a=="cleanmgr":    subprocess.Popen(["cleanmgr.exe"])
