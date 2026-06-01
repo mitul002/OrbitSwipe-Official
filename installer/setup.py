@@ -647,4 +647,150 @@ def run_uninstaller(tk_root=None):
             except: pass
 
 
+def run_silent_installer():
+    import os, sys, shutil, subprocess
+    from orbitswipe.core.constants import APP_NAME, APP_VERSION, APPDATA_DIR
+
+    def get_special_folder(csidl):
+        try:
+            import ctypes
+            from ctypes import wintypes
+            buf = ctypes.create_unicode_buffer(wintypes.MAX_PATH)
+            ctypes.windll.shell32.SHGetFolderPathW(None, csidl, None, 0, buf)
+            return buf.value
+        except:
+            return os.path.join(os.path.expanduser("~"), "Desktop")
+
+    try:
+        os.makedirs(APPDATA_DIR, exist_ok=True)
+        with open(os.path.join(APPDATA_DIR, "debug_silent.txt"), "w") as f:
+            f.write(f"Silent mode activated\nsys.executable: {sys.executable}\nsys.argv: {sys.argv}\nsys.frozen: {getattr(sys, 'frozen', False)}")
+            
+        la = os.environ.get("LOCALAPPDATA", "C:\\Users\\Default\\AppData\\Local")
+        path = os.path.join(la, APP_NAME)
+
+        try:
+            import winreg
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, f"Software\\{APP_NAME}", 0, winreg.KEY_READ)
+            reg_path, _ = winreg.QueryValueEx(key, "InstallPath")
+            if reg_path and os.path.exists(reg_path): path = reg_path
+            winreg.CloseKey(key)
+        except: pass
+
+        if "--install-to" in sys.argv:
+            try:
+                idx = sys.argv.index("--install-to")
+                path = sys.argv[idx+1]
+            except: pass
+
+        if not os.path.exists(path): os.makedirs(path, exist_ok=True)
+
+        try:
+            import psutil, time
+            current_pid = os.getpid()
+            parent_pid = os.getppid()
+            for proc in psutil.process_iter(['pid', 'name']):
+                if proc.info['name'] == 'OrbitSwipe.exe' and proc.info['pid'] not in (current_pid, parent_pid):
+                    proc.kill()
+            time.sleep(0.5)
+        except: pass
+
+        real_is_frozen = getattr(sys, 'frozen', False) or sys.argv[0].lower().endswith('.exe')
+        if real_is_frozen:
+            dst_exe = os.path.join(path, "OrbitSwipe.exe")
+            src_exe = os.path.abspath(sys.argv[0])
+            if os.path.normcase(src_exe) != os.path.normcase(dst_exe):
+                shutil.copy2(src_exe, dst_exe)
+            dst = dst_exe
+            icon_loc = dst
+        else:
+            root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+            pkg_dst = os.path.join(path, "orbitswipe")
+            if os.path.exists(pkg_dst): shutil.rmtree(pkg_dst, ignore_errors=True)
+            os.makedirs(pkg_dst, exist_ok=True)
+            src_pkg = os.path.join(root_dir, "orbitswipe")
+            if os.path.exists(src_pkg):
+                shutil.copytree(src_pkg, pkg_dst, dirs_exist_ok=True)
+            dst = os.path.join(path, "launcher.py")
+            with open(dst, "w", encoding="utf-8") as f:
+                f.write("import os\nimport sys\nsys.path.insert(0, os.path.dirname(__file__))\nfrom orbitswipe.main import run_app\nfrom orbitswipe.installer.setup import run_uninstaller\nif __name__ == '__main__':\n    if '--uninstall' in sys.argv: run_uninstaller()\n    else: run_app()\n")
+            target = "pyw.exe" if shutil.which("pyw.exe") else "py.exe"
+            icon_loc = os.path.join(path, "orbitswipe", "image", "OrbitSwipe.ico")
+
+        try:
+            lnk = os.path.join(get_special_folder(0), f"{APP_NAME}.lnk")
+            if real_is_frozen:
+                args = "--run"
+                targ = dst
+            else:
+                targ = "pyw.exe" if shutil.which("pyw.exe") else "py.exe"
+                args = f'"{dst}" --run'
+            ps_cmd = (
+                f"$s=(New-Object -COM WScript.Shell).CreateShortcut('{lnk}'); "
+                f"$s.TargetPath='{targ}'; $s.Arguments='{args}'; "
+                f"$s.WorkingDirectory='{path}'; $s.IconLocation='{icon_loc}'; $s.Save()"
+            )
+            subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", ps_cmd], creationflags=0x08000000)
+        except: pass
+
+        try:
+            import winreg
+            run_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run", 0, winreg.KEY_SET_VALUE)
+            if real_is_frozen:
+                winreg.SetValueEx(run_key, APP_NAME, 0, winreg.REG_SZ, f'"{dst}" --run --silent')
+            else:
+                winreg.SetValueEx(run_key, APP_NAME, 0, winreg.REG_SZ, f'"{targ}" "{dst}" --run --silent')
+            winreg.CloseKey(run_key)
+        except: pass
+
+        try:
+            import winreg
+            un_key_path = rf"Software\Microsoft\Windows\CurrentVersion\Uninstall\{APP_NAME}"
+            un_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, un_key_path)
+            if real_is_frozen:
+                un_cmd = f'"{dst}" --uninstall'
+            else:
+                un_cmd = f'{targ} "{dst}" --uninstall'
+            winreg.SetValueEx(un_key, "DisplayName", 0, winreg.REG_SZ, APP_NAME)
+            winreg.SetValueEx(un_key, "UninstallString", 0, winreg.REG_SZ, un_cmd)
+            winreg.SetValueEx(un_key, "DisplayIcon", 0, winreg.REG_SZ, icon_loc)
+            winreg.SetValueEx(un_key, "DisplayVersion", 0, winreg.REG_SZ, APP_VERSION)
+            winreg.SetValueEx(un_key, "Publisher", 0, winreg.REG_SZ, "Cross Tech")
+            winreg.CloseKey(un_key)
+        except: pass
+
+        try:
+            ulnk = os.path.join(path, f"Uninstall {APP_NAME}.lnk")
+            if real_is_frozen:
+                args = "--uninstall"
+                targ = dst
+            else:
+                targ = "py.exe" if shutil.which("py.exe") else sys.executable
+                args = f'"{dst}" --uninstall'
+            ps_un = (
+                f"$s=(New-Object -COM WScript.Shell).CreateShortcut('{ulnk}'); "
+                f"$s.TargetPath='{targ}'; $s.Arguments='{args}'; "
+                f"$s.WorkingDirectory='{path}'; $s.Description='Uninstall OrbitSwipe'; "
+                f"$s.IconLocation='shell32.dll,31'; $s.Save()"
+            )
+            subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", ps_un], creationflags=0x08000000)
+        except: pass
+
+        try:
+            import winreg
+            key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, f"Software\\{APP_NAME}")
+            winreg.SetValueEx(key, "InstallPath", 0, winreg.REG_SZ, path)
+            winreg.CloseKey(key)
+        except: pass
+
+        os._exit(0)
+    except Exception as e:
+        try:
+            with open(os.path.join(APPDATA_DIR, "installer_crash.txt"), "w") as f:
+                import traceback
+                f.write(traceback.format_exc())
+        except: pass
+        os._exit(1)
+
+
 if __name__ == '__main__': run_installer()

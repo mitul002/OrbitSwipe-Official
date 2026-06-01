@@ -248,11 +248,16 @@ if __name__ == "__main__":
                     mb.showerror("OrbitSwipe crashed", f"{e}\\n\\nCheck {LOG_FILE}")
                 except Exception: pass
         else:
-            result = run_installer()
-            if result and result.get("launch") and result.get("install_path"):
-                path    = result["install_path"]
-                new_exe = os.path.join(path, "OrbitSwipe.exe")
-                if os.path.exists(new_exe):
-                    subprocess.Popen([new_exe, "--run", "--first-launch"], cwd=path, creationflags=0x08000000)      
-                else:
-                    subprocess.Popen([sys.executable, __file__, "--run", "--first-launch"], creationflags=0x08000000)
+            is_silent = "/S" in sys.argv or "--silent" in sys.argv or "/VERYSILENT" in sys.argv
+            if is_silent:
+                from orbitswipe.installer.setup import run_silent_installer
+                run_silent_installer()
+            else:
+                result = run_installer()
+                if result and result.get("launch") and result.get("install_path"):
+                    path    = result["install_path"]
+                    new_exe = os.path.join(path, "OrbitSwipe.exe")
+                    if os.path.exists(new_exe):
+                        subprocess.Popen([new_exe, "--run", "--first-launch"], cwd=path, creationflags=0x08000000)      
+                    else:
+                        subprocess.Popen([sys.executable, __file__, "--run", "--first-launch"], creationflags=0x08000000)
