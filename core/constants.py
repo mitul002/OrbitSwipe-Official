@@ -2,7 +2,7 @@ import os
 import sys
 
 APP_NAME    = "OrbitSwipe"
-APP_VERSION = "1.5.4"
+APP_VERSION = "1.5.2"
 CONFIG_VERSION = 3
 CF = 0x08000000
 APPDATA_DIR = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), APP_NAME)

@@ -1,5 +1,5 @@
 PackageIdentifier: CrossTech.OrbitSwipe
-PackageVersion: 1.5.4
+PackageVersion: 1.5.2
 PackageName: OrbitSwipe
 Publisher: Cross Tech
 License: Proprietary
@@ -8,7 +8,7 @@ Installers:
   - Architecture: x64
     InstallerType: exe
     InstallerUrl: https://orbitswipe.vercel.app/OrbitSwipe.exe
-    InstallerSha256: 08dd1ba2c1117d975f321a763bf47de6a9cccd87f46b18c1209669c40399e271
+    InstallerSha256: 71a7b5d16d50a62541fa2c06fc2181c1d6ce61f1396847f44799733194e573d8
     InstallerSwitches:
       Silent: /S
       SilentWithProgress: /S
