@@ -67,6 +67,10 @@ def set_tk_icon(window):
 
 def run_installer():
     try:
+        with open(r"C:\Users\ENVY X360\AppData\Local\OrbitSwipe\debug_args.txt", "w") as f:
+            f.write(str(sys.argv))
+    except: pass
+    try:
         import ctypes
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(f"Magnetieght.OrbitSwipe.Setup.{APP_VERSION}")
     except Exception:
@@ -259,7 +263,8 @@ def run_installer():
                     time.sleep(0.5) # Ensure file handles are fully released
                 except: pass
 
-                if IS_FROZEN:
+                real_is_frozen = getattr(sys, 'frozen', False) or (not sys.executable.lower().endswith("python.exe") and not sys.executable.lower().endswith("pythonw.exe") and sys.executable.lower().endswith(".exe"))
+                if real_is_frozen:
                     ui("[30%] Copying Standalone App…", 30)
                     dst_exe = os.path.join(path, "OrbitSwipe.exe")
                     if os.path.normcase(sys.executable) != os.path.normcase(dst_exe):
@@ -296,13 +301,20 @@ def run_installer():
                     ui("[70%] Creating shortcut…", 70)
                     try:
                         lnk = os.path.join(get_special_folder(0), f"{APP_NAME}.lnk")
-                        icon_path = os.path.join(path, "orbitswipe", "image", "OrbitSwipe.ico")
-                        # Use pyw.exe to hide console if possible, or py.exe
-                        target = "pyw.exe" if shutil.which("pyw.exe") else "py.exe"
+                        
+                        if real_is_frozen:
+                            target = os.path.join(path, "OrbitSwipe.exe")
+                            args = "--run"
+                            icon_loc = target
+                        else:
+                            target = "pyw.exe" if shutil.which("pyw.exe") else "py.exe"
+                            args = f'"{dst}" --run'
+                            icon_loc = icon_path
+
                         ps_cmd = (
                             f"$s=(New-Object -COM WScript.Shell).CreateShortcut('{lnk}'); "
-                            f"$s.TargetPath='{target}'; $s.Arguments='\"{dst}\" --run'; "
-                            f"$s.WorkingDirectory='{path}'; $s.IconLocation='{icon_path}'; $s.Save()"
+                            f"$s.TargetPath='{target}'; $s.Arguments='{args}'; "
+                            f"$s.WorkingDirectory='{path}'; $s.IconLocation='{icon_loc}'; $s.Save()"
                         )
                         subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", ps_cmd],
                                        creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
@@ -315,7 +327,7 @@ def run_installer():
                     run_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
                                              r"Software\Microsoft\Windows\CurrentVersion\Run",
                                              0, winreg.KEY_SET_VALUE)
-                    if IS_FROZEN:
+                    if real_is_frozen:
                         winreg.SetValueEx(run_key, APP_NAME, 0, winreg.REG_SZ, f'"{dst}" --run --silent')
                     else:
                         target = "pyw.exe" if shutil.which("pyw.exe") else "py.exe"
@@ -329,14 +341,15 @@ def run_installer():
                     un_key_path = rf"Software\Microsoft\Windows\CurrentVersion\Uninstall\{APP_NAME}"
                     un_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, un_key_path)
                     
-                    if IS_FROZEN:
+                    if real_is_frozen:
                         target = os.path.join(path, "OrbitSwipe.exe")
                         un_cmd = f'"{target}" --uninstall'
+                        icon_path = target
                     else:
-                        target = shutil.which("py.exe") or sys.executable
-                        un_cmd = f'"{target}" "{dst}" --uninstall'
-                        
-                    icon_path = os.path.join(path, "orbitswipe", "image", "OrbitSwipe.ico")
+                        target = "pyw.exe" if shutil.which("pyw.exe") else "py.exe"
+                        args = "--uninstall"
+                        un_cmd = f'{target} "{dst}" {args}'
+                        icon_path = os.path.join(path, "orbitswipe", "image", "OrbitSwipe.ico")
 
                     winreg.SetValueEx(un_key, "DisplayName", 0, winreg.REG_SZ, APP_NAME)
                     winreg.SetValueEx(un_key, "UninstallString", 0, winreg.REG_SZ, un_cmd)
@@ -432,6 +445,8 @@ def run_installer():
 
     if is_silent:
         try:
+            with open(r"C:\Users\ENVY X360\AppData\Local\OrbitSwipe\debug_silent.txt", "w") as f:
+                f.write("Silent mode activated, calling do_install()")
             do_install()
         except Exception as e:
             with open(os.path.join(dp, "installer_crash.txt"), "w") as f:

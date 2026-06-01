@@ -7,7 +7,7 @@ $packageArgs = @{
   silentArgs    = '/S'
   validExitCodes= @(0)
   softwareName  = 'OrbitSwipe'
-  checksum      = '74E026DBD3B3A09017EDC9AAA8F369E1F7C86F5995D58689587EB5385BCAC7D5'
+  checksum      = '5B64644F0847CF69D55FF15F264D290770489658BB6333F05840BAAD5D1D4F12'
   checksumType  = 'sha256'
 }
 
