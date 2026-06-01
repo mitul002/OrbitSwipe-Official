@@ -12,7 +12,9 @@ import {
   Palette,
   Timer,
   Power,
-  Droplet
+  Droplet,
+  Cpu,
+  Keyboard
 } from "lucide-react"
 
 const features = [
@@ -85,6 +87,20 @@ const features = [
     description: "Built-in screen magnifier with hex/rgb copy and color history tracking.",
     gradient: "from-fuchsia-500 to-purple-600",
     tag: "Tool",
+  },
+  {
+    icon: Cpu,
+    title: "Live System Stats",
+    description: "Track CPU, RAM, Network speed, and Battery directly from your launcher hub.",
+    gradient: "from-rose-500 to-orange-500",
+    tag: "Hardware",
+  },
+  {
+    icon: Keyboard,
+    title: "Global Hotkeys",
+    description: "Instantly trigger specific tools, apps, and macros with customizable shortcuts.",
+    gradient: "from-teal-400 to-emerald-500",
+    tag: "Control",
   },
 ]
 
