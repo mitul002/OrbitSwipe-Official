@@ -316,7 +316,7 @@ def run_installer():
                             f"$s.WorkingDirectory='{path}'; $s.IconLocation='{icon_loc}'; $s.Save()"
                         )
                         subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", ps_cmd],
-                                       creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+                                       creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0, timeout=5)
                     except Exception as e:
                         _log(f"Installer: Shortcut creation failed: {e}")
 
@@ -407,9 +407,7 @@ def run_installer():
                         f"$s.IconLocation='shell32.dll,31'; $s.Save()"
                     )
                     subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", ps_un],
-                                   creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
-                    
-                    # Desktop Shortcut is already handled earlier if dv.get() is True
+                                   creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0, timeout=5)
                 except Exception as e:
                     _log(f"Un-sc err: {e}")
 
@@ -730,7 +728,7 @@ def run_silent_installer():
                 f"$s.TargetPath='{targ}'; $s.Arguments='{args}'; "
                 f"$s.WorkingDirectory='{path}'; $s.IconLocation='{icon_loc}'; $s.Save()"
             )
-            subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", ps_cmd], creationflags=0x08000000)
+            subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", ps_cmd], creationflags=0x08000000, timeout=5)
         except: pass
 
         try:
@@ -773,7 +771,7 @@ def run_silent_installer():
                 f"$s.WorkingDirectory='{path}'; $s.Description='Uninstall OrbitSwipe'; "
                 f"$s.IconLocation='shell32.dll,31'; $s.Save()"
             )
-            subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", ps_un], creationflags=0x08000000)
+            subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", ps_un], creationflags=0x08000000, timeout=5)
         except: pass
 
         try:
