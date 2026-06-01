@@ -67,7 +67,7 @@ def set_tk_icon(window):
 
 def run_installer():
     try:
-        with open(r"C:\Users\ENVY X360\AppData\Local\OrbitSwipe\debug_args.txt", "w") as f:
+        with open(os.path.join(APPDATA_DIR, "debug_args.txt"), "w") as f:
             f.write(str(sys.argv))
     except: pass
     try:
@@ -227,7 +227,8 @@ def run_installer():
                 else:
                     args = f'"{os.path.abspath(__file__)}" --install-to "{path}"'
                 if is_silent: args += ' /S'
-                res = ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, args, None, 1)
+                exe_to_elevate = os.path.abspath(sys.argv[0]) if getattr(sys, 'frozen', False) else sys.executable
+                res = ctypes.windll.shell32.ShellExecuteW(None, "runas", exe_to_elevate, args, None, 1)
                 if res > 32: os._exit(0)
             except Exception as e:
                 if not is_silent:
@@ -252,23 +253,21 @@ def run_installer():
                 ui("[15%] Closing existing app...", 15)
                 try:
                     import psutil, time
-                    mypid = os.getpid()
-                    for proc in psutil.process_iter(['name', 'pid']):
-                        try:
-                            n = proc.info['name']
-                            if n and ("orbitswipe" in n.lower()) and proc.info['pid'] != mypid:
-                                proc.kill()
-                                proc.wait(timeout=2)
-                        except: pass
+                    current_pid = os.getpid()
+                    parent_pid = os.getppid()
+                    for proc in psutil.process_iter(['pid', 'name']):
+                        if proc.info['name'] == 'OrbitSwipe.exe' and proc.info['pid'] not in (current_pid, parent_pid):
+                            proc.kill()
                     time.sleep(0.5) # Ensure file handles are fully released
                 except: pass
 
-                real_is_frozen = getattr(sys, 'frozen', False) or (not sys.executable.lower().endswith("python.exe") and not sys.executable.lower().endswith("pythonw.exe") and sys.executable.lower().endswith(".exe"))
+                real_is_frozen = getattr(sys, 'frozen', False) or sys.argv[0].lower().endswith('.exe')
                 if real_is_frozen:
                     ui("[30%] Copying Standalone App…", 30)
                     dst_exe = os.path.join(path, "OrbitSwipe.exe")
-                    if os.path.normcase(sys.executable) != os.path.normcase(dst_exe):
-                        shutil.copy2(sys.executable, dst_exe)
+                    src_exe = os.path.abspath(sys.argv[0])
+                    if os.path.normcase(src_exe) != os.path.normcase(dst_exe):
+                        shutil.copy2(src_exe, dst_exe)
                     dst = dst_exe
                 else:
                     ui("[20%] Preparing project structure…", 20)
@@ -384,7 +383,7 @@ def run_installer():
 
                 try:
                     ulnk = os.path.join(path, f"Uninstall {APP_NAME}.lnk")
-                    if IS_FROZEN:
+                    if real_is_frozen:
                         target = os.path.join(path, "OrbitSwipe.exe")
                         args = "--uninstall"
                     else:
@@ -392,8 +391,8 @@ def run_installer():
                         args = f'"{dst}" --uninstall'
 
                     # Shortcut icon
-                    icon_loc = f"{target},0" if IS_FROZEN else "shell32.dll,31"
-                    if not IS_FROZEN:
+                    icon_loc = f"{target},0" if real_is_frozen else "shell32.dll,31"
+                    if not real_is_frozen:
                         test_icon = os.path.join(path, "orbitswipe", "image", "OrbitSwipe.ico")
                         if os.path.exists(test_icon): icon_loc = test_icon
 
@@ -424,6 +423,11 @@ def run_installer():
                 pass
 
             except Exception as e:
+                try:
+                    with open(os.path.join(APPDATA_DIR, "debug_exception.txt"), "w") as f:
+                        import traceback
+                        f.write(traceback.format_exc())
+                except: pass
                 _log(f"Installer Error: {e}")
                 ui(f"❌ Error: {str(e)[:50]}", 0, ERR)
                 with open(os.path.join(path, "installer_error.txt"), "w") as f:
@@ -445,13 +449,17 @@ def run_installer():
 
     if is_silent:
         try:
-            with open(r"C:\Users\ENVY X360\AppData\Local\OrbitSwipe\debug_silent.txt", "w") as f:
-                f.write("Silent mode activated, calling do_install()")
+            os.makedirs(APPDATA_DIR, exist_ok=True)
+            with open(os.path.join(APPDATA_DIR, "debug_silent.txt"), "w") as f:
+                f.write(f"Silent mode activated\nsys.executable: {sys.executable}\nsys.argv: {sys.argv}\nsys.frozen: {getattr(sys, 'frozen', False)}")
             do_install()
         except Exception as e:
-            with open(os.path.join(dp, "installer_crash.txt"), "w") as f:
-                import traceback
-                f.write(traceback.format_exc())
+            try:
+                os.makedirs(dp, exist_ok=True)
+                with open(os.path.join(dp, "installer_crash.txt"), "w") as f:
+                    import traceback
+                    f.write(traceback.format_exc())
+            except: pass
             os._exit(1)
         os._exit(0)
 
