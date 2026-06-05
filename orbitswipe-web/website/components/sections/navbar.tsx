@@ -59,7 +59,7 @@ export function Navbar() {
                   className="rounded-lg group-hover:scale-105 transition-transform duration-300"
                 />
               </div>
-              <div className="hidden sm:block">
+              <div className="block">
                 <span className="font-bold text-foreground">OrbitSwipe</span>
               </div>
             </motion.a>
